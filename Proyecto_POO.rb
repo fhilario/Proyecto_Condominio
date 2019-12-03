@@ -33,6 +33,32 @@ class Propietario
 	end
 end
 
+class Servicios 
+	attr_accessor :codigo , :descripcion, :estado
+	def initialize (codigo , descripcion, estado)
+		@codigo = codigo
+		@descripcion = descripcion
+		@estado  = estado
+	end
+	def muestraDatos
+		"Codigo: #{codigo}  - Descripcion: #{descripcion}"
+	end
+end
+
+class Recibo 
+	attr_accessor :codigo , :dni_propietario, :descripcion, :monto, :estado
+	def initialize (codigo , dni_propietario, descripcion, monto, estado)
+		@codigo = codigo
+		@dni_propietario = dni_propietario
+		@descripcion  = descripcion
+		@monto = monto
+		@estado = estado
+	end
+	def muestraDatos
+		"Codigo: #{codigo}  - DNI_Propietario : #{dni_propietario} - Descripcion: #{descripcion} - Monto: #{monto} - Estado: #{estado}"
+	end
+end
+
 class Persona
 	attr_accessor :dni, :nombresCompletos, :genero, :tipo, :dniPropietario 
 	def initialize (dni, nombresCompletos, genero, tipo, dniPropietario)
@@ -81,11 +107,13 @@ class Visitas < Persona
 end
 
 class Administrador
-	attr_accessor :arregloDepartamento, :arregloPropietario, :arregloPersona
+	attr_accessor :arregloDepartamento, :arregloPropietario, :arregloPersona, :arregloServicios, :arregloRecibo
 	def initialize
 		@arregloDepartamento = []
 		@arregloPropietario = []
 		@arregloPersona = []
+		@arregloServicios = []
+		@arregloRecibo = []
 	end
 
 	def validarDepartamento(departamento)
@@ -112,9 +140,19 @@ class Administrador
 		return "Propietario registrado con exito"
 	end
 
+	def registrarRecibo(recibo)
+		arregloRecibo.push(recibo)
+		return "Recibo registrado con exito"
+	end
+
 	def registrarPersona(persona)
 		arregloPersona.push(persona)
 		return "Persona registrado con exito"
+	end
+
+    def registrarServicios(servicio)
+		arregloServicios.push(servicio)
+		return "Servicio registrado con exito"
 	end
 
 	def buscarPropietario(dni)
@@ -144,6 +182,31 @@ class Administrador
 		return nil
 	end
 
+	def buscarServicio(descripcion)
+		for p in arregloServicios
+			if p.descripcion == descripcion 
+				return p
+			end
+		end
+		return nil
+	end
+
+	def buscarRecibos(tipo, descripcion)
+		for p in arregloRecibo
+			if tipo == "DNI"
+				if p.dni_propietario == descripcion 
+				return p
+				end
+			elsif tipo == "ESTADO"
+			    if p.estado == descripcion 
+				return p
+				end	
+			end
+			
+		end
+		return nil
+	end
+
 	def obtenerDepartamento()
 		temp = []
 		for depa in arregloDepartamento
@@ -169,6 +232,31 @@ class Administrador
 		end
 		return temp
 	end
+
+	def obtenerServicios()
+		temp = []
+		for per in arregloServicios
+				temp.push(per)
+		end
+		return temp
+	end
+
+	def obtenerRecibos()
+		temp = []
+		for per in arregloRecibo
+				temp.push(per)
+		end
+		return temp
+	end
+	def obtenerRecibosDeudores()
+		temp = []
+		for per in arregloRecibo
+			if per.estado == "Vencido"
+				temp.push(per)	
+			end
+		end
+		return temp
+	end
 end
 
 class Factoria
@@ -182,6 +270,10 @@ class Factoria
          return Propietario.new(arg[0], arg[1], arg[2], arg[3])
      when "Departamento"
          return Departamento.new(arg[0], arg[1], arg[2], arg[3])
+     when "Servicios"
+         return Servicios.new(arg[0], arg[1], arg[2])
+     when "Recibo"
+         return Recibo.new(arg[0], arg[1], arg[2],arg[3],arg[4])
      end
   end  
 end
@@ -220,9 +312,13 @@ class Controlador
       elsif tipo == "Propietario"
       resultado = administrador.registrarPropietario(objeto)
       elsif tipo == "Departamento"
-      resultado = administrador.registrarDepartamento(objeto)			
+      resultado = administrador.registrarDepartamento(objeto)	
+      elsif tipo == "Servicios"
+      resultado = administrador.registrarServicios(objeto)
+      elsif tipo == "Recibo"
+      resultado = administrador.registrarRecibo(objeto)				
       end
-      vista.mostrarMensaje(resultado)
+      #vista.mostrarMensaje(resultado)
    end
 
    def obtenerDepartamento()
@@ -268,6 +364,33 @@ class Controlador
    	   arregloPersonaDNI = administrador.buscarPersona(dni)
    	   vista.mostrarObjeto(arregloPersonaDNI)
    end
+   def obtenerServicios()
+   	   puts "Lista de Servicios "
+   	   arregloServicios2 = administrador.obtenerServicios()
+   	   vista.imprimirListado(arregloServicios2)
+   	   puts "-------------------"
+   end
+   def buscarServicio(descripcion)
+   	   servicio = administrador.buscarServicio(descripcion)
+   	   vista.mostrarObjeto(servicio)
+   end
+   def obtenerRecibos()
+   	   puts "Lista de Recibos "
+   	   arregloRecibo2 = administrador.obtenerRecibos()
+   	   vista.imprimirListado(arregloRecibo2)
+   	   puts "-------------------"
+   end
+   def buscarRecibos(tipo, descripcion)
+   	   recibo = administrador.buscarRecibos(tipo, descripcion)
+   	   vista.mostrarObjeto(recibo)
+   	   
+   end
+   def obtenerRecibosDeudores()
+   	   puts "Lista de Deudores "
+   	   arregloRecibo3 = administrador.obtenerRecibosDeudores()
+   	   vista.imprimirListado(arregloRecibo3)
+   	   puts "-------------------"
+   end
 end
 
 class TestGlobal < Test::Unit::TestCase
@@ -288,6 +411,18 @@ class TestGlobal < Test::Unit::TestCase
         @controlador.registra("Visitas","27439386","Euler Tuesta Bardales" ,"Masculino", "Visitas", "71589688", "05/12/2019", "Por venir")
 		@controlador.registra("Familiares","24654789","Elena Ramirez","Femenino","Familiares", "71589688", "Suegra")
         @controlador.registra("Familiares","34567434","Juan Carlos Hilario Ramirez","Masculino","Familiares","10469856","Hermano")
+        #Registro Servicios
+		@controlador.registra("Servicios","01","Luz" ,"Activo")
+		@controlador.registra("Servicios","02","Agua","Activo")
+        @controlador.registra("Servicios","03","Ascensor" ,"Activo")
+        @controlador.registra("Servicios","04","Luz Comunal" ,"Activo")
+        @controlador.registra("Servicios","05","Areas Verdes" ,"Activo")
+        @controlador.registra("Servicios","06","Gimnasio" ,"Activo")
+        #Registro Recibo
+		@controlador.registra("Recibo","01","71589688" ,"Concepto de Mantenimiento",128.90,"Por Pagar")
+		@controlador.registra("Recibo","02","10469856","Concepto de Mantenimiento",130.90, "Por Pagar")
+        @controlador.registra("Recibo","03","16263736" ,"Concepto de Mantenimiento",115.90, "Vencido")
+
 	end
 
 	def testListar
@@ -297,6 +432,12 @@ class TestGlobal < Test::Unit::TestCase
      	@controlador.obtenerPropietario()
      	#Lista de Personas(Visitas o Familiares) de acuerdo al DNI Propietario
      	@controlador.obtenerPersona("10469856", "Familiares")
+     	#Lista de Servicios
+     	@controlador.obtenerServicios()
+     	#Lista de Recibos
+     	@controlador.obtenerRecibos()
+     	#Lista de Deudores
+     	@controlador.obtenerRecibosDeudores()
 	end
 
 	def testBuscar
@@ -306,6 +447,11 @@ class TestGlobal < Test::Unit::TestCase
         @controlador.buscarPropietario("71589688")
         #Obtener Persona(Visitas o Familiares) por DNI 
         @controlador.buscarPersona("34567434")
+        #Obtener Servicios por descripcion
+        @controlador.buscarServicio("Luz")
+        #Obtener Recibos por dni propietario
+        @controlador.buscarRecibos("DNI","71589688")
+
 	end
 
 	def test_validar_datos
