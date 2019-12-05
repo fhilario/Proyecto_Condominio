@@ -448,7 +448,7 @@ class TestGlobal < Test::Unit::TestCase
         #Obtener Persona(Visitas o Familiares) por DNI 
         @controlador.buscarPersona("34567434")
         #Obtener Servicios por descripcion
-        @controlador.buscarServicio("Luz")
+        @controlador.buscarServicio("Agua")
         #Obtener Recibos por dni propietario
         @controlador.buscarRecibos("DNI","71589688")
 
